@@ -27,6 +27,7 @@ class FormScraper:
             else:
                 raise RuntimeError('invalid form input element')
 
+            # label in attribute
             for attr in element.attrs:
                 if 'label' in attr:
                     field.display_name = element.attrs[attr]
@@ -34,6 +35,7 @@ class FormScraper:
 
             form.add_field(field, element.get('id'))
 
+        # label in tag
         labels = soup.form.find_all('label')
         for label in labels:
             field = form.get_field(id=label['for'])
@@ -63,11 +65,12 @@ class Form:
     def get_field(self, name=None, id=None):
         if name and id:
             raise RuntimeError('cannot get by both name and id')
-
-        if name:
+        elif name:
             return self.name_lookup[name]
-        if id:
+        elif id:
             return self.id_lookup[id]
+        else:
+            RuntimeError('missing search specifier (should be name or id)')
 
     def fill_field(self, name, value):
         self.values[name] = value
@@ -78,6 +81,7 @@ class Form:
             if field.required and field.name not in self.values:
                 raise KeyError(f'{field.name} is required and has not been provided')
 
+        # send form
         if self.method == 'GET':
             resp = requests.get(self.action, data=self.values)
         elif self.method == 'POST':
@@ -85,7 +89,11 @@ class Form:
         else:
             raise RuntimeError(f'{self.method} is not a valid form submission method')
 
-        return resp
+        # check for submission errors
+        if resp.status_code >= 400 and resp.status_code < 500:
+            raise RuntimeError('invalid request during form submission')
+        if resp.status_code >= 500 and resp.status_code < 600:
+            raise RuntimeError('internal server error during form submission')
 
 
 class Field:
@@ -112,4 +120,5 @@ class Field:
             result = f'* {result}'
         if self.hidden:
             result = f'({result})'
+
         return result
