@@ -64,13 +64,13 @@ class Form:
 
     def get_field(self, name=None, id=None):
         if name and id:
-            raise RuntimeError('cannot get by both name and id')
+            raise ValueError('cannot get by both name and id')
         elif name:
             return self.name_lookup[name]
         elif id:
             return self.id_lookup[id]
         else:
-            RuntimeError('missing search specifier (should be name or id)')
+            raise ValueError('missing search specifier (should be name or id)')
 
     def fill_field(self, name, value):
         self.values[name] = value
@@ -87,7 +87,7 @@ class Form:
         elif self.method == 'POST':
             resp = requests.post(self.action, data=self.values)
         else:
-            raise RuntimeError(f'{self.method} is not a valid form submission method')
+            raise ValueError(f'{self.method} is not a valid form submission method')
 
         # check for submission errors
         if resp.status_code >= 400 and resp.status_code < 500:
