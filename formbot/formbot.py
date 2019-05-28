@@ -18,14 +18,16 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if (message.author.bot):
+    print("message: " + message.content + ", channel: " + str(message.channel))
+    if message.author.bot:
         return
     await bot.process_commands(message)
-    await message.channel.send("I am Groot")
+    if message.guild is None:
+        print("DM channel")
 
 @bot.command()
 async def mentor(ctx):
-    print("hello")
+    print("Mentor triggered")
     await ctx.author.send("Hello, how can I help?")
     await ctx.message.delete()
 
