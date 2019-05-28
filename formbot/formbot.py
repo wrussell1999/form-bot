@@ -1,10 +1,12 @@
 import discord
 from discord.ext import commands
 import json
+import logging
 
 with open("config.json") as file:
     config = json.load(file)
 
+logging.basicConfig(level=logging.INFO)
 bot = commands.Bot(command_prefix='!')
 
 def main():
@@ -16,13 +18,16 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    print("hello")
-    await message.channel.send("Hello")
+    if (message.author.bot):
+        return
+    await bot.process_commands(message)
+    await message.channel.send("I am Groot")
 
-@bot.command
+@bot.command()
 async def mentor(ctx):
-    ctx.author.send("Hello, how can I help?")
-    ctx.message.delete()
+    print("hello")
+    await ctx.author.send("Hello, how can I help?")
+    await ctx.message.delete()
 
 token = config['token']
 bot.run(token)
