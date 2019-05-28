@@ -5,3 +5,6 @@ env
 venv
 .venv/
 .env/
+
+# config
+config.json
