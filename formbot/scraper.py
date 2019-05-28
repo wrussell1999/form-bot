@@ -27,6 +27,11 @@ class FormScraper:
             else:
                 raise RuntimeError('invalid form input element')
 
+            for attr in element.attrs:
+                if 'label' in attr:
+                    field.display_name = element.attrs[attr]
+                    break
+
             form.add_field(field, element.get('id'))
 
         labels = soup.form.find_all('label')
