@@ -65,10 +65,7 @@ class Form:
             raise KeyError(f'{name} does not appear in form')
 
         field = self.name_lookup[name]
-        if field.validate(value):
-            field.fill(value)
-        else:
-            raise ValueError('invalid value')
+        field.fill(value)
 
     def submit(self):
         # populate values
@@ -126,15 +123,11 @@ class Field:
 
         self.required = required
 
-        self.value = None
-        self.fill(default)
+        self.value = default
 
     @property
     def hidden(self):
         return self.fieldtype == 'hidden'
-
-    def validate(self, data):
-        return True
 
     def fill(self, data):
         self.value = data
@@ -161,11 +154,11 @@ class EmailField(Field):
     def __init__(self, name, required=False, default=None):
         super().__init__('email', name, required, default)
 
-    def validate(self, data):
+    def fill(self, data):
         if EmailField.EMAIL_REGEX.match(data):
-            return True
+            super().fill(data)
         else:
-            return False
+            raise ValueError('invalid email address')
 
 
 class CheckboxField(Field):
@@ -175,12 +168,9 @@ class CheckboxField(Field):
     def __init__(self, name, required=False, default=False, retvalue='on'):
         self.retvalue = retvalue
 
-        super().__init__('checkbox', name, required, default)
-    
-    def validate(self, data):
-        return (isinstance(data, bool),
-                data.lower() in CheckboxField.TRUE,
-                data.lower() in CheckboxField.FALSE)
+        super().__init__('checkbox', name, None, default)
+
+        self.fill(default)
 
     def fill(self, data):
         if not isinstance(data, bool):
@@ -189,6 +179,8 @@ class CheckboxField(Field):
                 data = True
             elif data.lower() in CheckboxField.FALSE:
                 data = False
+            else:
+                raise ValueError('invalid boolean value')
 
         if data:
             self.value = self.retvalue
