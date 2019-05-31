@@ -43,8 +43,6 @@ class Form:
         self.name_lookup = {}
         self.id_lookup = {}
 
-        self.values = {}
-
     def add_field(self, field, id=None):
         self.fields.append(field)
 
@@ -66,22 +64,27 @@ class Form:
         if name not in self.name_lookup:
             raise KeyError(f'{name} does not appear in form')
 
-        if self.name_lookup[name].validate(value):
-            self.values[name] = value
+        field = self.name_lookup[name]
+        if field.validate(value):
+            field.fill(value)
         else:
             raise ValueError('invalid value')
 
     def submit(self):
-        # ensure all required fields are provided
+        # populate values
+        values = {}
         for field in self.fields:
-            if field.required and field.name not in self.values:
+            if field.required and field.value is None:
                 raise KeyError(f'{field.name} is required and has not been provided')
+
+            if field.value is not None:
+                values[field.name] = field.value
 
         # send form
         if self.method == 'GET':
-            resp = requests.get(self.action, data=self.values)
+            resp = requests.get(self.action, data=values)
         elif self.method == 'POST':
-            resp = requests.post(self.action, data=self.values)
+            resp = requests.post(self.action, data=values)
         else:
             raise ValueError(f'{self.method} is not a valid form submission method')
 
@@ -107,6 +110,8 @@ def load_field(element):
 
         if fieldtype == 'email':
             return EmailField(name, required, default)
+        elif fieldtype == 'checkbox':
+            return CheckboxField(name, required, element.get('checked', False), element.get('value', 'on'))
         else:
             return Field(fieldtype, name, required, default)
 
@@ -118,8 +123,11 @@ class Field:
         self.fieldtype = fieldtype
         self.name = name
         self.display_name = None
-        self.default = default
+
         self.required = required
+
+        self.value = None
+        self.fill(default)
 
     @property
     def hidden(self):
@@ -128,14 +136,17 @@ class Field:
     def validate(self, data):
         return True
 
+    def fill(self, data):
+        self.value = data
+
     def __str__(self):
         if self.display_name:
             result = f'{self.display_name} [{self.name}] : {self.fieldtype}'
         else:
             result = f'{self.name} : {self.fieldtype}'
 
-        if self.default:
-            result += f' = {self.default}'
+        if self.value is not None:
+            result += f' = {self.value}'
         if self.required:
             result = f'* {result}'
         if self.hidden:
@@ -155,3 +166,31 @@ class EmailField(Field):
             return True
         else:
             return False
+
+
+class CheckboxField(Field):
+    TRUE = ['true', 'y', 'yes', 'yup']
+    FALSE = ['false', 'n', 'no', 'nope']
+
+    def __init__(self, name, required=False, default=False, retvalue='on'):
+        self.retvalue = retvalue
+
+        super().__init__('checkbox', name, required, default)
+    
+    def validate(self, data):
+        return (isinstance(data, bool),
+                data.lower() in CheckboxField.TRUE,
+                data.lower() in CheckboxField.FALSE)
+
+    def fill(self, data):
+        if not isinstance(data, bool):
+            data = data.lower()
+            if data.lower() in CheckboxField.TRUE:
+                data = True
+            elif data.lower() in CheckboxField.FALSE:
+                data = False
+
+        if data:
+            self.value = self.retvalue
+        else:
+            self.value = None
