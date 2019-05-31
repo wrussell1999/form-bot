@@ -16,6 +16,8 @@ class FormScraper:
         inputs = soup.form.find_all(['input', 'textarea'])
         for element in inputs:
             field = load_field(element)
+            if field is None:
+                continue
 
             # label in attribute
             for attr in element.attrs:
@@ -105,7 +107,11 @@ def load_field(element):
         required = element.get('required', False)
         default = element.get('default', None)
 
-        if fieldtype == 'email':
+        if fieldtype in ('color', 'file'):
+            raise ValueError(f'unsupported field type "{fieldtype}"')
+        elif fieldtype in ('submit', 'image', 'button'):
+            return None
+        elif fieldtype == 'email':
             return EmailField(name, required, default)
         elif fieldtype == 'checkbox':
             return CheckboxField(name, required, element.get('checked', False), element.get('value', 'on'))
