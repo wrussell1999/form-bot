@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 
 
@@ -10,22 +11,11 @@ class FormScraper:
         response = requests.get(self.url)
         soup = BeautifulSoup(response.content, features='html.parser')
 
-        form = Form(soup.form['method'], soup.form['action'])
+        form = Form(soup.form.get('method', 'GET'), soup.form.get('action'))
 
         inputs = soup.form.find_all(['input', 'textarea'])
         for element in inputs:
-            if element.name == 'input':
-                field = Field(element.get('type'),
-                              element.get('name'),
-                              element.get('required', False),
-                              element.get('value', None))
-            elif element.name == 'textarea':
-                field = Field('textarea',
-                              element.get('name'),
-                              element.get('required', False),
-                              element.text)
-            else:
-                raise RuntimeError('invalid form input element')
+            field = load_field(element)
 
             # label in attribute
             for attr in element.attrs:
@@ -73,7 +63,13 @@ class Form:
             raise ValueError('missing search specifier (should be name or id)')
 
     def fill_field(self, name, value):
-        self.values[name] = value
+        if name not in self.name_lookup:
+            raise KeyError(f'{name} does not appear in form')
+
+        if self.name_lookup[name].validate(value):
+            self.values[name] = value
+        else:
+            raise ValueError('invalid value')
 
     def submit(self):
         # ensure all required fields are provided
@@ -96,6 +92,27 @@ class Form:
             raise RuntimeError('internal server error during form submission')
 
 
+def load_field(element):
+    if element.name == 'textarea':
+        return Field('textarea',
+                     element.get('name'),
+                     element.get('required', False),
+                     element.text)
+
+    if element.name == 'input':
+        fieldtype = element['type']
+        name = element['name']
+        required = element.get('required', False)
+        default = element.get('default', None)
+
+        if fieldtype == 'email':
+            return EmailField(name, required, default)
+        else:
+            return Field(fieldtype, name, required, default)
+
+    raise ValueError('invalid form input element')
+
+
 class Field:
     def __init__(self, fieldtype, name, required=False, default=None):
         self.fieldtype = fieldtype
@@ -107,6 +124,9 @@ class Field:
     @property
     def hidden(self):
         return self.fieldtype == 'hidden'
+
+    def validate(self, data):
+        return True
 
     def __str__(self):
         if self.display_name:
@@ -122,3 +142,16 @@ class Field:
             result = f'({result})'
 
         return result
+
+
+class EmailField(Field):
+    EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+
+    def __init__(self, name, required=False, default=None):
+        super().__init__('email', name, required, default)
+
+    def validate(self, data):
+        if EmailField.EMAIL_REGEX.match(data):
+            return True
+        else:
+            return False
