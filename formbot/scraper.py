@@ -67,12 +67,14 @@ class FormScraper:
                     'value': element.get('value', 'on')
                 }
             elif ftype == 'radio':
-                radios = self.doc.find_all('input', attrs={'type': 'radio', 'name': name})
+                radios = self.doc.find_all(
+                    'input', attrs={'type': 'radio', 'name': name})
 
                 labels = [self.load_label(radio) for radio in radios]
 
                 display = ', '.join(labels)
-                required = any(radio.get('required', False) for radio in radios)
+                required = any(radio.get('required', False)
+                               for radio in radios)
                 default = None
                 validator = fields.radio
                 extra = {
@@ -145,7 +147,8 @@ class Form:
         values = {}
         for field in self.fields:
             if field.required and field.data is None:
-                raise KeyError(f'{field.name} is required and has not been provided')
+                raise KeyError(
+                    f'{field.name} is required and has not been provided')
 
             if field.data is not None:
                 values[field.name] = field.data
@@ -156,7 +159,8 @@ class Form:
         elif self.method == 'POST':
             resp = requests.post(self.action, data=values)
         else:
-            raise ValueError(f'{self.method} is not a valid form submission method')
+            raise ValueError(
+                f'{self.method} is not a valid form submission method')
 
         # check for submission errors
         if resp.status_code >= 400 and resp.status_code < 500:

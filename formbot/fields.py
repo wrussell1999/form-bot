@@ -42,22 +42,30 @@ class Field:
         return result
 
 
-EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 def email(data, field):
-    if EMAIL_REGEX.match(data):
+    # init static variables
+    if not hasattr(email, 'EMAIL_REGEX'):
+        email.REGEX = re.compile(
+            r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+
+    if email.REGEX.match(data):
         return data
     else:
         raise ValueError('invalid email address')
 
 
-TRUE_VALUES = ['true', 'y', 'yes', 'yup']
-FALSE_VALUES = ['false', 'n', 'no', 'nope']
 def checkbox(data, field):
+    # init static variables
+    if not hasattr(checkbox, 'TRUE_VALUES'):
+        checkbox.TRUE_VALUES = ['true', 'y', 'yes', 'yup']
+    if not hasattr(checkbox, 'FALSE_VALUES'):
+        checkbox.FALSE_VALUES = ['false', 'n', 'no', 'nope']
+
     if not isinstance(data, bool):
         data = data.lower()
-        if data.lower() in TRUE_VALUES:
+        if data.lower() in checkbox.TRUE_VALUES:
             data = True
-        elif data.lower() in FALSE_VALUES:
+        elif data.lower() in checkbox.FALSE_VALUES:
             data = False
         else:
             raise ValueError('invalid boolean value')
@@ -70,9 +78,13 @@ def checkbox(data, field):
 
 def radio(data, field):
     data = data.lower()
-    if data in field.extra['values']:
-        return data
-    elif data in field.extra['labels']:
-        return data
-    else:
-        raise ValueError('invalid input choice')
+
+    for value in field.extra['values']:
+        if data == value:
+            return value
+
+    for i, label in enumerate(field.extra['labels']):
+        if data == label:
+            return field.extra['values'][i]
+
+    raise ValueError('invalid input choice')
