@@ -31,7 +31,6 @@ class FormScraper:
             if 'id' in element.attrs:
                 label = soup.find('label', attrs={'for': element['id']})
                 if label:
-                    print(label.text)
                     field.display = label.text
 
             form.add_field(field, element.get('id'))
@@ -79,11 +78,11 @@ class Form:
         # populate values
         values = {}
         for field in self.fields:
-            if field.required and field.value is None:
+            if field.required and field.data is None:
                 raise KeyError(f'{field.name} is required and has not been provided')
 
-            if field.value is not None:
-                values[field.name] = field.value
+            if field.data is not None:
+                values[field.name] = field.data
 
         # send form
         if self.method == 'GET':
