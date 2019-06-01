@@ -14,12 +14,19 @@ class FormScraper:
 
         form = Form(soup.form.get('method', 'GET'), soup.form.get('action'))
 
-        inputs = soup.form.find_all(['input', 'textarea'])
-        for element in inputs:
+        names = set()
+
+        for element in soup.form.find_all(['input', 'textarea']):
             # create field
-            field = fields.load_field(element)
+            field = fields.load_field(soup, element)
             if field is None:
                 continue
+
+            # ensure field is not duplicated
+            if field.name in names:
+                continue
+            else:
+                names.add(field.name)
 
             # label in attribute
             for attr in element.attrs:
@@ -49,8 +56,7 @@ class Form:
 
     def add_field(self, field, id=None):
         if field.name in self.name_lookup:
-            # field already exists
-            self.name_lookup[field.name].merge(field)
+            raise ValueError('cannot have duplicate field names')
         else:
             self.fields.append(field)
             self.name_lookup[field.name] = field

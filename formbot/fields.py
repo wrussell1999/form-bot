@@ -1,7 +1,7 @@
 import re
 
 
-def load_field(element, label=None):
+def load_field(doc, element, label=None):
     if label is not None:
         label = label.strip()
 
@@ -33,8 +33,14 @@ def load_field(element, label=None):
             extra = {
                 'value': element.get('value', 'on')
             }
-        # elif ftype == 'radio':
-        #    return RadioField(name, label, required, None, element.get('value'))
+        elif ftype == 'radio':
+            radios = doc.find_all('input', attrs={'type': 'radio', 'name': name})
+            required = any(radio.get('required', False) for radio in radios)
+            default = None
+            validator = radio
+            extra = {
+                'choices': [radio['value'] for radio in radios]
+            }
 
         return Field(type=ftype,
                      name=name,
@@ -71,9 +77,6 @@ class Field:
             self.data = self.validator(data, self)
         else:
             self.data = data
-
-    def merge(self, other):
-        raise NotImplementedError()
 
     def __str__(self):
         if self.display:
@@ -117,27 +120,8 @@ def checkbox(data, field):
         return None
 
 
-# class RadioField(Field):
-#     def __init__(self, name, display=None, required=False, default=False, retvalue=''):
-#         super().__init__('radio', name, display, required, None)
-
-#         self.choices = [retvalue]
-#         if default:
-#             self.value = retvalue
-
-#     def fill(self, data):
-#         if data in self.choices:
-#             self.value = data
-#         else:
-#             raise ValueError('invalid input choice')
-
-#     def merge(self, other):
-#         assert self.fieldtype == other.fieldtype == 'radio'
-#         assert self.name == other.name
-#         self.display += ', ' + other.display
-
-#         self.required = self.required or other.required
-
-#         self.choices.extend(other.choices)
-#         if other.value is not None:
-#             self.value = other.value
+def radio(data, field):
+    if data in field.extra['choices']:
+        return data
+    else:
+        raise ValueError('invalid input choice')
