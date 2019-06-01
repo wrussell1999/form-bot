@@ -69,12 +69,15 @@ class FormScraper:
             elif ftype == 'radio':
                 radios = self.doc.find_all('input', attrs={'type': 'radio', 'name': name})
 
-                display = ', '.join(self.load_label(radio) for radio in radios)
+                labels = [self.load_label(radio) for radio in radios]
+
+                display = ', '.join(labels)
                 required = any(radio.get('required', False) for radio in radios)
                 default = None
                 validator = fields.radio
                 extra = {
-                    'choices': [radio['value'] for radio in radios]
+                    'labels': [label.lower() for label in labels],
+                    'values': [radio['value'] for radio in radios]
                 }
 
             return Field(type=ftype,

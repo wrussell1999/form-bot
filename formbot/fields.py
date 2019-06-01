@@ -69,7 +69,10 @@ def checkbox(data, field):
 
 
 def radio(data, field):
-    if data in field.extra['choices']:
+    data = data.lower()
+    if data in field.extra['values']:
+        return data
+    elif data in field.extra['labels']:
         return data
     else:
         raise ValueError('invalid input choice')
