@@ -13,9 +13,13 @@ class FormScraper:
     def extract(self):
         response = requests.get(self.url)
         self.doc = BeautifulSoup(response.content, features='html.parser')
+        for tag in self.doc.find_all(['header', 'footer']):
+            tag.extract()
 
-        form = Form(self.doc.form.get('method', 'GET'),
-                    self.doc.form.get('action'))
+        action = self.doc.form.get('action')
+        if action.startswith('/'):
+            action = self.url + action
+        form = Form(self.doc.form.get('method', 'GET'), action)
 
         names = set()
 
@@ -57,6 +61,8 @@ class FormScraper:
                 raise NotImplementedError(f'unsupported field type "{ftype}"')
             elif ftype in ('submit', 'image', 'button'):
                 return None
+            elif ftype == 'hidden':
+                default = element['value']
             elif ftype == 'email':
                 default = element.text
                 validator = fields.email
@@ -104,7 +110,7 @@ class FormScraper:
             if 'label' in attr:
                 return element.attrs[attr]
 
-        return None
+        return ''
 
 
 class Form:
@@ -152,6 +158,10 @@ class Form:
 
             if field.data is not None:
                 values[field.name] = field.data
+            elif field.type == 'hidden':
+                values[field.name] = field.data or ''
+
+        print(values)
 
         # send form
         if self.method == 'GET':
