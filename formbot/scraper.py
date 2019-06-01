@@ -1,24 +1,27 @@
 import requests
 from bs4 import BeautifulSoup
 
+from .fields import Field
 from . import fields
 
 
 class FormScraper:
     def __init__(self, url):
         self.url = url
+        self.doc = None
 
     def extract(self):
         response = requests.get(self.url)
-        soup = BeautifulSoup(response.content, features='html.parser')
+        self.doc = BeautifulSoup(response.content, features='html.parser')
 
-        form = Form(soup.form.get('method', 'GET'), soup.form.get('action'))
+        form = Form(self.doc.form.get('method', 'GET'),
+                    self.doc.form.get('action'))
 
         names = set()
 
-        for element in soup.form.find_all(['input', 'textarea']):
+        for element in self.doc.form.find_all(['input', 'textarea']):
             # create field
-            field = fields.load_field(soup, element)
+            field = self.load_field(element)
             if field is None:
                 continue
 
@@ -36,13 +39,59 @@ class FormScraper:
 
             # label in tag
             if 'id' in element.attrs:
-                label = soup.find('label', attrs={'for': element['id']})
+                label = self.doc.find('label', attrs={'for': element['id']})
                 if label:
                     field.display = label.text
 
             form.add_field(field, element.get('id'))
 
         return form
+
+    def load_field(self, element):
+        if element.name == 'textarea':
+            return Field(type='textarea',
+                         name=element.get('name'),
+                         required=element.get('required', False),
+                         default=element.text)
+
+        if element.name == 'input':
+            ftype = element['type']
+            name = element['name']
+            required = element.get('required', False)
+            default = element.get('default', None)
+            validator = None
+            extra = {}
+
+            if ftype in ('color', 'file'):
+                raise NotImplementedError(f'unsupported field type "{ftype}"')
+            elif ftype in ('submit', 'image', 'button'):
+                return None
+            elif ftype == 'email':
+                default = element.text
+                validator = fields.email
+            elif ftype == 'checkbox':
+                default = element.get('checked', False)
+                validator = fields.checkbox
+                extra = {
+                    'value': element.get('value', 'on')
+                }
+            elif ftype == 'radio':
+                radios = self.doc.find_all('input', attrs={'type': 'radio', 'name': name})
+                required = any(radio.get('required', False) for radio in radios)
+                default = None
+                validator = fields.radio
+                extra = {
+                    'choices': [radio['value'] for radio in radios]
+                }
+
+            return Field(type=ftype,
+                         name=name,
+                         required=required,
+                         default=default,
+                         validator=validator,
+                         extra=extra)
+
+        raise NotImplementedError('form element not supported')
 
 
 class Form:

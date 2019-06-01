@@ -1,58 +1,6 @@
 import re
 
 
-def load_field(doc, element, label=None):
-    if label is not None:
-        label = label.strip()
-
-    if element.name == 'textarea':
-        return Field(type='textarea',
-                     name=element.get('name'),
-                     display=label,
-                     required=element.get('required', False),
-                     default=element.text)
-
-    if element.name == 'input':
-        ftype = element['type']
-        name = element['name']
-        required = element.get('required', False)
-        default = element.get('default', None)
-        validator = None
-        extra = {}
-
-        if ftype in ('color', 'file'):
-            raise NotImplementedError(f'unsupported field type "{ftype}"')
-        elif ftype in ('submit', 'image', 'button'):
-            return None
-        elif ftype == 'email':
-            default = element.text
-            validator = email
-        elif ftype == 'checkbox':
-            default = element.get('checked', False)
-            validator = checkbox
-            extra = {
-                'value': element.get('value', 'on')
-            }
-        elif ftype == 'radio':
-            radios = doc.find_all('input', attrs={'type': 'radio', 'name': name})
-            required = any(radio.get('required', False) for radio in radios)
-            default = None
-            validator = radio
-            extra = {
-                'choices': [radio['value'] for radio in radios]
-            }
-
-        return Field(type=ftype,
-                     name=name,
-                     display=label,
-                     required=required,
-                     default=default,
-                     validator=validator,
-                     extra=extra)
-
-    raise NotImplementedError('form element not supported')
-
-
 class Field:
     def __init__(self, type, name, display=None, required=False, default=None, validator=None, extra=None):
         self.type = type
