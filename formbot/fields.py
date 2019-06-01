@@ -1,10 +1,11 @@
 import re
 
 
-def load_field(element):
+def load_field(element, label=None):
     if element.name == 'textarea':
         return Field('textarea',
                      element.get('name'),
+                     label,
                      element.get('required', False),
                      element.text)
 
@@ -19,20 +20,22 @@ def load_field(element):
         elif fieldtype in ('submit', 'image', 'button'):
             return None
         elif fieldtype == 'email':
-            return EmailField(name, required, default)
+            return EmailField(name, label, required, default)
         elif fieldtype == 'checkbox':
-            return CheckboxField(name, required, element.get('checked', False), element.get('value', 'on'))
+            return CheckboxField(name, label, required, element.get('checked', False), element.get('value', 'on'))
+        elif fieldtype == 'radio':
+            return RadioField(name, label, required, None, element.get('value'))
         else:
-            return Field(fieldtype, name, required, default)
+            return Field(fieldtype, name, label, required, default)
 
     raise ValueError('invalid form input element')
 
 
 class Field:
-    def __init__(self, fieldtype, name, required=False, default=None):
+    def __init__(self, fieldtype, name, display=None, required=False, default=None):
         self.fieldtype = fieldtype
         self.name = name
-        self.display_name = None
+        self.display = display
 
         self.required = required
 
@@ -45,9 +48,12 @@ class Field:
     def fill(self, data):
         self.value = data
 
+    def merge(self, other):
+        raise NotImplementedError()
+
     def __str__(self):
-        if self.display_name:
-            result = f'{self.display_name} [{self.name}] : {self.fieldtype}'
+        if self.display:
+            result = f'{self.display} [{self.name}] : {self.fieldtype}'
         else:
             result = f'{self.name} : {self.fieldtype}'
 
@@ -64,8 +70,8 @@ class Field:
 class EmailField(Field):
     EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 
-    def __init__(self, name, required=False, default=None):
-        super().__init__('email', name, required, default)
+    def __init__(self, name, display=None, required=False, default=None):
+        super().__init__('email', name, display, required, default)
 
     def fill(self, data):
         if EmailField.EMAIL_REGEX.match(data):
@@ -78,11 +84,10 @@ class CheckboxField(Field):
     TRUE = ['true', 'y', 'yes', 'yup']
     FALSE = ['false', 'n', 'no', 'nope']
 
-    def __init__(self, name, required=False, default=False, retvalue='on'):
+    def __init__(self, name, display=None, required=False, default=False, retvalue='on'):
+        super().__init__('checkbox', name, display, required, None)
+
         self.retvalue = retvalue
-
-        super().__init__('checkbox', name, None, default)
-
         self.fill(default)
 
     def fill(self, data):
@@ -99,3 +104,29 @@ class CheckboxField(Field):
             self.value = self.retvalue
         else:
             self.value = None
+
+
+class RadioField(Field):
+    def __init__(self, name, display=None, required=False, default=False, retvalue=''):
+        super().__init__('radio', name, display, required, None)
+
+        self.choices = [retvalue]
+        if default:
+            self.value = retvalue
+
+    def fill(self, data):
+        if data in self.choices:
+            self.value = data
+        else:
+            raise ValueError('invalid input choice')
+
+    def merge(self, other):
+        assert self.fieldtype == other.fieldtype == 'radio'
+        assert self.name == other.name
+        self.display += ', ' + other.display
+
+        self.required = self.required or other.required
+
+        self.choices.extend(other.choices)
+        if other.value is not None:
+            self.value = other.value

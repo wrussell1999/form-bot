@@ -16,6 +16,7 @@ class FormScraper:
 
         inputs = soup.form.find_all(['input', 'textarea'])
         for element in inputs:
+            # create field
             field = fields.load_field(element)
             if field is None:
                 continue
@@ -23,16 +24,17 @@ class FormScraper:
             # label in attribute
             for attr in element.attrs:
                 if 'label' in attr:
-                    field.display_name = element.attrs[attr]
+                    field.display = element.attrs[attr]
                     break
 
-            form.add_field(field, element.get('id'))
+            # label in tag
+            if 'id' in element.attrs:
+                label = soup.find('label', attrs={'for': element['id']})
+                if label:
+                    print(label.text)
+                    field.display = label.text
 
-        # label in tag
-        labels = soup.form.find_all('label')
-        for label in labels:
-            field = form.get_field(id=label['for'])
-            field.display_name = label.text
+            form.add_field(field, element.get('id'))
 
         return form
 
@@ -47,11 +49,14 @@ class Form:
         self.id_lookup = {}
 
     def add_field(self, field, id=None):
-        self.fields.append(field)
-
-        self.name_lookup[field.name] = field
-        if id:
-            self.id_lookup[id] = field
+        if field.name in self.name_lookup:
+            # field already exists
+            self.name_lookup[field.name].merge(field)
+        else:
+            self.fields.append(field)
+            self.name_lookup[field.name] = field
+            if id:
+                self.id_lookup[id] = field
 
     def get_field(self, name=None, id=None):
         if name and id:
