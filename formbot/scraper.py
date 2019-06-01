@@ -31,26 +31,17 @@ class FormScraper:
             else:
                 names.add(field.name)
 
-            # label in attribute
-            for attr in element.attrs:
-                if 'label' in attr:
-                    field.display = element.attrs[attr]
-                    break
-
-            # label in tag
-            if 'id' in element.attrs:
-                label = self.doc.find('label', attrs={'for': element['id']})
-                if label:
-                    field.display = label.text
-
             form.add_field(field, element.get('id'))
 
         return form
 
     def load_field(self, element):
+        display = self.load_label(element)
+
         if element.name == 'textarea':
             return Field(type='textarea',
-                         name=element.get('name'),
+                         name=element['name'],
+                         display=display,
                          required=element.get('required', False),
                          default=element.text)
 
@@ -77,6 +68,8 @@ class FormScraper:
                 }
             elif ftype == 'radio':
                 radios = self.doc.find_all('input', attrs={'type': 'radio', 'name': name})
+
+                display = ', '.join(self.load_label(radio) for radio in radios)
                 required = any(radio.get('required', False) for radio in radios)
                 default = None
                 validator = fields.radio
@@ -86,12 +79,27 @@ class FormScraper:
 
             return Field(type=ftype,
                          name=name,
+                         display=display,
                          required=required,
                          default=default,
                          validator=validator,
                          extra=extra)
 
         raise NotImplementedError('form element not supported')
+
+    def load_label(self, element):
+        # label in tag
+        if 'id' in element.attrs:
+            label = self.doc.find('label', attrs={'for': element['id']})
+            if label:
+                return label.text
+
+        # label in attribute
+        for attr in element.attrs:
+            if 'label' in attr:
+                return element.attrs[attr]
+
+        return None
 
 
 class Form:
