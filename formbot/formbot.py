@@ -52,30 +52,34 @@ async def on_message(message):
     if message.guild is None:
         print("DM channel")
         author = str(message.author.id)
-        if author in responses and len(responses[author]['responses']) < len(questions[author]):
+        if author in responses and len(responses[author]['responses']) < len(questions[author]['questions']):
             handle_response(message, author)
-            responses[author]['responses'].append(message.content)
             await mentor_response(message)
             print(responses)
 
 async def mentor_response(message):
     author = str(message.author.id)
     response_length = len(responses[author]['responses'])
-    if response_length < len(questions[author]):
-        if isinstance(questions[author][response_length], str):
+    if response_length < len(questions[author]['questions']):
+        if isinstance(questions[author]['questions'][response_length], str):
             print("Normal message")
-            await message.author.send(questions[author][response_length])
+            await message.author.send(questions[author]['questions'][response_length])
         else:
             print("Embed")
-            await message.author.send(embed=questions[author][response_length])
+            await message.author.send(embed=questions[author]['questions'][response_length])
     else:
         await message.author.send("Someone will be over to help you shortly!")
+        for field in responses[author]['form'].fields:
+            print(str(field))
+        responses[author]['form'].submit()
         del responses[author]
 
 def handle_response(response, author):
-    responses[author]['responses'].append(response)
-    responses[author]['form'].submit()
-    print("Submitted")
+    responses[author]['responses'].append(response.content)
+    index = len(responses[author]['responses']) - 1
+    name = questions[author]['names'][index]
+    responses[author]['form'].fill_field(name, response.content)
+    print("Responsed filled")
 
 @bot.command()
 async def mentor(ctx):
@@ -86,7 +90,10 @@ async def mentor(ctx):
         "form" : form,
         "responses" : []
     }
-    questions[author] = get_questions(form)
+    questions[author] = {
+        "questions": get_questions(form),
+        "names": [field.name for field in form.fields]
+    }
     print(questions[author])
     await ctx.author.send("Hello there! I'm here to help")
     await mentor_response(ctx.message)
