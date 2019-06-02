@@ -13,7 +13,6 @@ with open("config.json") as file:
         config = json.load(file)
 
 def main():
-    
     logging.basicConfig(level=logging.INFO)
     token = config['token']
     bot.run(token)
@@ -46,29 +45,29 @@ async def on_message(message):
     await bot.process_commands(message)
     if message.guild is None:
         print("DM channel")
-        author = str(message.author)
+        author = str(message.author.id)
         if author in responses and len(responses[author]) < len(questions[author]):
             responses[author].append(message.content)
-            
             await mentor_response(message)
             print(responses)
 
 async def mentor_response(message):
-    author = str(message.author)
+    author = str(message.author.id)
     if len(responses[author]) < len(questions[author]):
         await message.author.send(questions[author][len(responses[author])])
     else:
         message.author.send("Someone will be over to help you shortly!")
+        del responses[author]
 
 @bot.command()
 async def mentor(ctx):
     print("Mentor triggered")
     scaper_obj = FormScraper(config['url'])
     form = scaper_obj.extract()
-    author = str(ctx.message.author)
+    author = str(ctx.message.author.id)
     responses[author] = []
     questions[author] = get_questions(form)
     print(questions[author])
-    await ctx.author.send("Hello there! I'm here to help")
+    await ctx.author.send("Hello there! I'm here to xhelp")
     await mentor_response(ctx.message)
     await ctx.message.delete()
