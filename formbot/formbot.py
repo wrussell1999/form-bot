@@ -33,8 +33,9 @@ def get_questions(form):
                 embed = discord.Embed(
                     title="Respond with one of the options below", colour=0x348DDD)
                 print(items)
-                for item in items:
-                    embed.add_field(name=item, value="-", inline=False)
+                for index, item in enumerate(items):
+                    option = "Option " + str(index + 1)
+                    embed.add_field(name=item, value=option, inline=False)
                 questions.append(embed)
     print(questions)
     return questions
