@@ -2,19 +2,32 @@ import discord
 from discord.ext import commands
 import json
 import logging
+from .scraper import FormScraper
 
 bot = commands.Bot(command_prefix='!')
 
 responses = {}
+questions = {}
 
-questions = ["What is your issue?", "Where can we find you?", "How can we contact you?"]
+with open("config.json") as file:
+        config = json.load(file)
 
 def main():
-    with open("config.json") as file:
-        config = json.load(file)
+    
     logging.basicConfig(level=logging.INFO)
     token = config['token']
     bot.run(token)
+
+def get_questions(form):
+    fields = form.fields
+    questions = []
+    for field in fields:
+        if field.type != 'hidden':
+            question = field.display + " (type: " + field.type + ")"
+            print(question)
+            questions.append(question)
+    print(questions)
+    return questions
 
 @bot.event
 async def on_ready():
@@ -28,21 +41,28 @@ async def on_message(message):
     await bot.process_commands(message)
     if message.guild is None:
         print("DM channel")
-        if str(message.author) in responses and len(responses[str(message.author)]) < len(questions):
-            responses[str(message.author)].append(message.content)
+        author = str(message.author)
+        if author in responses and len(responses[author]) < len(questions[author]):
+            responses[author].append(message.content)
             await mentor_response(message)
             print(responses)
 
 async def mentor_response(message):
-    if len(responses[str(message.author)]) < len(questions):
-        await message.author.send(questions[len(responses[str(message.author)])])
+    author = str(message.author)
+    if len(responses[author]) < len(questions[author]):
+        await message.author.send(questions[author][len(responses[author])])
     else:
-        print("done")
+        message.author.send("Someone will be over to help you shortly!")
 
 @bot.command()
 async def mentor(ctx):
     print("Mentor triggered")
-    responses[str(ctx.message.author)] = []
+    scaper_obj = FormScraper(config['url'])
+    form = scaper_obj.extract()
+    author = str(ctx.message.author)
+    responses[author] = []
+    questions[author] = get_questions(form)
+    print(questions[author])
     await ctx.author.send("Hello there! I'm here to help")
     await mentor_response(ctx.message)
     await ctx.message.delete()
