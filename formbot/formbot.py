@@ -52,31 +52,40 @@ async def on_message(message):
     if message.guild is None:
         print("DM channel")
         author = str(message.author.id)
-        if author in responses and len(responses[author]) < len(questions[author]):
-            responses[author].append(message.content)
+        if author in responses and len(responses[author]['responses']) < len(questions[author]):
+            handle_response(message, author)
+            responses[author]['responses'].append(message.content)
             await mentor_response(message)
             print(responses)
 
 async def mentor_response(message):
     author = str(message.author.id)
-    response_length = len(responses[author])
+    response_length = len(responses[author]['responses'])
     if response_length < len(questions[author]):
         if isinstance(questions[author][response_length], str):
-            print("Rip")
+            print("Normal message")
             await message.author.send(questions[author][response_length])
         else:
-            print("embed")
+            print("Embed")
             await message.author.send(embed=questions[author][response_length])
     else:
         await message.author.send("Someone will be over to help you shortly!")
         del responses[author]
+
+def handle_response(response, author):
+    responses[author]['responses'].append(response)
+    responses[author]['form'].submit()
+    print("Submitted")
 
 @bot.command()
 async def mentor(ctx):
     print("Mentor triggered")
     form = scaper_obj.extract()
     author = str(ctx.message.author.id)
-    responses[author] = ()
+    responses[author] = {
+        "form" : form,
+        "responses" : []
+    }
     questions[author] = get_questions(form)
     print(questions[author])
     await ctx.author.send("Hello there! I'm here to help")
