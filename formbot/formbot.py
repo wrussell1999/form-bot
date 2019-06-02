@@ -12,6 +12,8 @@ questions = {}
 with open("config.json") as file:
         config = json.load(file)
 
+scaper_obj = FormScraper(config['url'])
+
 def main():
     logging.basicConfig(level=logging.INFO)
     token = config['token']
@@ -27,9 +29,13 @@ def get_questions(form):
                 print(question)
                 questions.append(question)
             elif field.type == 'radio':
-                question = "**Respond with one of the options:**\n- " + field.display
-                print(question)
-                questions.append(question)
+                items = field.display.split(',')
+                embed = discord.Embed(
+                    title="Respond with one of the options below", colour=0x348DDD)
+                print(items)
+                for item in items:
+                    embed.add_field(name=item, value="-", inline=False)
+                questions.append(embed)
     print(questions)
     return questions
 
@@ -53,21 +59,26 @@ async def on_message(message):
 
 async def mentor_response(message):
     author = str(message.author.id)
-    if len(responses[author]) < len(questions[author]):
-        await message.author.send(questions[author][len(responses[author])])
+    response_length = len(responses[author])
+    if response_length < len(questions[author]):
+        if isinstance(questions[author][response_length], str):
+            print("Rip")
+            await message.author.send(questions[author][response_length])
+        else:
+            print("embed")
+            await message.author.send(embed=questions[author][response_length])
     else:
-        message.author.send("Someone will be over to help you shortly!")
+        await message.author.send("Someone will be over to help you shortly!")
         del responses[author]
 
 @bot.command()
 async def mentor(ctx):
     print("Mentor triggered")
-    scaper_obj = FormScraper(config['url'])
     form = scaper_obj.extract()
     author = str(ctx.message.author.id)
-    responses[author] = []
+    responses[author] = ()
     questions[author] = get_questions(form)
     print(questions[author])
-    await ctx.author.send("Hello there! I'm here to xhelp")
+    await ctx.author.send("Hello there! I'm here to help")
     await mentor_response(ctx.message)
     await ctx.message.delete()
