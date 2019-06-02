@@ -78,6 +78,7 @@ def handle_response(response, author):
     responses[author]['responses'].append(response.content)
     index = len(responses[author]['responses']) - 1
     name = questions[author]['names'][index]
+    print(name, '=', response.content)
     responses[author]['form'].fill_field(name, response.content)
     print("Responsed filled")
 
@@ -92,7 +93,7 @@ async def mentor(ctx):
     }
     questions[author] = {
         "questions": get_questions(form),
-        "names": [field.name for field in form.fields]
+        "names": [field.name for field in form.fields if not field.hidden]
     }
     print(questions[author])
     await ctx.author.send("Hello there! I'm here to help")
