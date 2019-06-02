@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 from .fields import Field
 from . import fields
@@ -11,15 +12,16 @@ class FormScraper:
         self.doc = None
 
     def extract(self):
-        response = requests.get(self.url)
+        session = requests.session()
+
+        response = session.get(self.url)
         self.doc = BeautifulSoup(response.content, features='html.parser')
         for tag in self.doc.find_all(['header', 'footer']):
             tag.extract()
 
-        action = self.doc.form.get('action')
-        if action.startswith('/'):
-            action = self.url + action
-        form = Form(self.doc.form.get('method', 'GET'), action)
+        form = Form(session,
+                    self.doc.form.get('method', 'GET'),
+                    urljoin(self.url, self.doc.form.get('action')))
 
         names = set()
 
@@ -114,7 +116,8 @@ class FormScraper:
 
 
 class Form:
-    def __init__(self, method, action):
+    def __init__(self, session, method, action):
+        self.session = session
         self.method = method.upper()
         self.action = action
 
@@ -161,16 +164,9 @@ class Form:
             elif field.type == 'hidden':
                 values[field.name] = field.data or ''
 
-        print(values)
-
         # send form
-        if self.method == 'GET':
-            resp = requests.get(self.action, data=values)
-        elif self.method == 'POST':
-            resp = requests.post(self.action, data=values)
-        else:
-            raise ValueError(
-                f'{self.method} is not a valid form submission method')
+        req = requests.Request(self.method, self.action, data=values)
+        resp = self.session.send(req.prepare())
 
         # check for submission errors
         if resp.status_code >= 400 and resp.status_code < 500:
