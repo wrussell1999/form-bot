@@ -26,18 +26,15 @@ def get_questions(form):
         if field.type != 'hidden':
             if field.type != 'radio':
                 question = field.display + " (type: " + field.type + ")"
-                print(question)
                 questions.append(question)
             elif field.type == 'radio':
                 items = field.display.split(',')
                 embed = discord.Embed(
-                    title="Respond with one of the options below", colour=0x348DDD)
-                print(items)
+                    title=config['embed_title'], colour=0x348DDD)
                 for index, item in enumerate(items):
                     option = "Option " + str(index + 1)
                     embed.add_field(name=item, value=option, inline=False)
                 questions.append(embed)
-    print(questions)
     return questions
 
 @bot.event
@@ -46,7 +43,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    print("message: " + message.content + ", channel: " + str(message.channel), ", author: "  + str(message.author))
     if message.author.bot:
         return
     await bot.process_commands(message)
@@ -63,29 +59,24 @@ async def mentor_response(message):
     response_length = len(responses[author]['responses'])
     if response_length < len(questions[author]['questions']):
         if isinstance(questions[author]['questions'][response_length], str):
-            print("Normal message")
             await message.author.send(questions[author]['questions'][response_length])
         else:
-            print("Embed")
             await message.author.send(embed=questions[author]['questions'][response_length])
     else:
-        await message.author.send("Someone will be over to help you shortly!")
-        for field in responses[author]['form'].fields:
-            print(str(field))
+        await message.author.send(config['end_message'])
         responses[author]['form'].submit()
         del responses[author]
+        del questions[author]
 
 def handle_response(response, author):
     responses[author]['responses'].append(response.content)
     index = len(responses[author]['responses']) - 1
     name = questions[author]['names'][index]
-    print(name, '=', response.content)
     responses[author]['form'].fill_field(name, response.content)
-    print("Responsed filled")
+    print("Response added to field")
 
 @bot.command()
 async def mentor(ctx):
-    print("Mentor triggered")
     form = scaper_obj.extract()
     author = str(ctx.message.author.id)
     responses[author] = {
@@ -97,6 +88,6 @@ async def mentor(ctx):
         "names": [field.name for field in form.fields if not field.hidden]
     }
     print(questions[author])
-    await ctx.author.send("Hello there! I'm here to help")
+    await ctx.author.send(config['start_message'])
     await mentor_response(ctx.message)
     await ctx.message.delete()

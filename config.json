@@ -1,4 +1,7 @@
 {
     "token": "",
-    "url": ""
+    "url": "",
+    "start_message": "Hello there! I'm here to help",
+    "end_message": "Someone will be over to help you shortly!",
+    "embed_title": "Respond with one of the options below"
 }
