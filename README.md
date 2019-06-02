@@ -2,7 +2,7 @@
 
 A discord bot for handling responses to generic online forms, through private messages.
 
-This bot was made especially for [HackTheMidlands 4.0](https://hackthemidlands.com/), but designed to be used for any form.
+This bot was made specially for [HackTheMidlands 4.0](https://hackthemidlands.com/), but designed to be used for any form.
 
 ## Usage
 
