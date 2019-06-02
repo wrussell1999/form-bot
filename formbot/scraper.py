@@ -78,7 +78,7 @@ class FormScraper:
 
                 labels = [self.load_label(radio) for radio in radios]
 
-                display = ', '.join(labels)
+                display = '\n- '.join(labels)
                 required = any(radio.get('required', False)
                                for radio in radios)
                 default = None

@@ -23,9 +23,14 @@ def get_questions(form):
     questions = []
     for field in fields:
         if field.type != 'hidden':
-            question = field.display + " (type: " + field.type + ")"
-            print(question)
-            questions.append(question)
+            if field.type != 'radio':
+                question = field.display + " (type: " + field.type + ")"
+                print(question)
+                questions.append(question)
+            elif field.type == 'radio':
+                question = "**Respond with one of the options:**\n- " + field.display
+                print(question)
+                questions.append(question)
     print(questions)
     return questions
 
@@ -44,6 +49,7 @@ async def on_message(message):
         author = str(message.author)
         if author in responses and len(responses[author]) < len(questions[author]):
             responses[author].append(message.content)
+            
             await mentor_response(message)
             print(responses)
 
