@@ -4,15 +4,14 @@ import json
 import logging
 from .scraper import FormScraper
 
-bot = commands.Bot(command_prefix='!')
-
-responses = {}
-questions = {}
-
 with open("config.json") as file:
         config = json.load(file)
 
+bot = commands.Bot(command_prefix=config['prefix'])
 scaper_obj = FormScraper(config['url'])
+
+responses = {}
+questions = {}
 
 def main():
     logging.basicConfig(level=logging.INFO)

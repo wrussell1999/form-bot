@@ -18,7 +18,8 @@ It works with the following fields (however, everything _should_ work):
 
 ### Things to note
 
-- You can change the command from `!mentor`.
+- You can change the command from `!mentor`. 
+	- _This can be done by renaming the method `async def mentor(ctx):`_
 - You can change the final message when all the questions have been asked.
 
 ## Development
@@ -31,6 +32,7 @@ $ source .venv/bin/activate
 ```
 
 ### Install required packages
+
 ```bash
 $ pip install -r requirements.txt
 ```
@@ -44,14 +46,16 @@ Add the token, and URL for the form you want to use to `config.json`.
 ```json
 {
     "token": "token",
-	"url": "url",
-	"start_message": "First message when the command is called",
-	"end_message": "Last command to show all the questions have be answered",
-	"embed_title": "The title for polls, such as radios"
+    "url": "url",
+    "start_message": "First message when the command is called",
+    "end_message": "Last command to show all the questions have be answered",
+    "embed_title": "The title for polls, such as radios",
+    "prefix": "prefix for the discord bot"
 }
 ```
 
 ### Run
+
 ```bash
 $ python -m formbot
 ```
