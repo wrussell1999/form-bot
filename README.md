@@ -44,7 +44,10 @@ Add the token, and URL for the form you want to use to `config.json`.
 ```json
 {
     "token": "token",
-    "url": "url"
+	"url": "url",
+	"start_message": "First message when the command is called",
+	"end_message": "Last command to show all the questions have be answered",
+	"embed_title": "The title for polls, such as radios"
 }
 ```
 
