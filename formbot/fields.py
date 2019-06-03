@@ -2,7 +2,8 @@ import re
 
 
 class Field:
-    def __init__(self, type, name, display=None, required=False, default=None, validator=None, extra=None):
+    def __init__(self, type, name, display=None, required=False, default=None,
+                 validator=None, extra=None):
         self.type = type
         self.name = name
         self.display = display
