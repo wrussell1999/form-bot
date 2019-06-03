@@ -80,8 +80,8 @@ async def mentor(ctx):
     form = scaper_obj.extract()
     author = str(ctx.message.author.id)
     responses[author] = {
-        "form" : form,
-        "responses" : []
+        "form": form,
+        "responses": []
     }
     questions[author] = {
         "questions": get_questions(form),
