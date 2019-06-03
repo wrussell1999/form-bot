@@ -9,3 +9,7 @@ venv
 # config
 config.json
 discord.log
+
+# vscode
+
+.vscode/

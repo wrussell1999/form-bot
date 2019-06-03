@@ -5,7 +5,7 @@ import logging
 from .scraper import FormScraper
 
 with open("config.json") as file:
-        config = json.load(file)
+    config = json.load(file)
 
 bot = commands.Bot(command_prefix=config['prefix'])
 scaper_obj = FormScraper(config['url'])
@@ -13,10 +13,12 @@ scaper_obj = FormScraper(config['url'])
 responses = {}
 questions = {}
 
+
 def main():
     logging.basicConfig(level=logging.INFO)
     token = config['token']
     bot.run(token)
+
 
 def get_questions(form):
     fields = form.fields
@@ -36,9 +38,11 @@ def get_questions(form):
                 questions.append(embed)
     return questions
 
+
 @bot.event
 async def on_ready():
     print("Ready")
+
 
 @bot.event
 async def on_message(message):
@@ -48,24 +52,29 @@ async def on_message(message):
     if message.guild is None:
         print("DM channel")
         author = str(message.author.id)
-        if author in responses and len(responses[author]['responses']) < len(questions[author]['questions']):
+        if author in responses and len(responses[author]['responses']) < \
+                len(questions[author]['questions']):
             handle_response(message, author)
             await mentor_response(message)
             print(responses)
+
 
 async def mentor_response(message):
     author = str(message.author.id)
     response_length = len(responses[author]['responses'])
     if response_length < len(questions[author]['questions']):
         if isinstance(questions[author]['questions'][response_length], str):
-            await message.author.send(questions[author]['questions'][response_length])
+            await message.author.send(
+                questions[author]['questions'][response_length])
         else:
-            await message.author.send(embed=questions[author]['questions'][response_length])
+            await message.author.send(
+                embed=questions[author]['questions'][response_length])
     else:
         await message.author.send(config['end_message'])
         responses[author]['form'].submit()
         del responses[author]
         del questions[author]
+
 
 def handle_response(response, author):
     responses[author]['responses'].append(response.content)
@@ -73,6 +82,7 @@ def handle_response(response, author):
     name = questions[author]['names'][index]
     responses[author]['form'].fill_field(name, response.content)
     print("Response added to field")
+
 
 @bot.command()
 async def mentor(ctx):
