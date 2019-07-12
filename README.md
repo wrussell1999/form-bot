@@ -27,14 +27,14 @@ It works with the following fields (however, everything _should_ work):
 ### Setup a virtual environment
 
 ```bash
-$ virtualenv .venv
+$ python3 -m venv .venv
 $ source .venv/bin/activate
 ```
 
 ### Install required packages
 
 ```bash
-$ pip install -r requirements.txt
+$ pip3 install -r requirements.txt
 ```
 
 ### Configuation
@@ -57,7 +57,7 @@ Add the token, and URL for the form you want to use to `config.json`.
 ### Run
 
 ```bash
-$ python -m formbot
+$ python3 -m formbot
 ```
 
 ## Contributors
