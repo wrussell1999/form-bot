@@ -1,6 +1,5 @@
 import re
 
-
 class Field:
     def __init__(self, type, name, display=None, required=False, default=None,
                  validator=None, extra=None):
@@ -42,7 +41,6 @@ class Field:
 
         return result
 
-
 def email(data, field):
     # init static variables
     if not hasattr(email, 'EMAIL_REGEX'):
@@ -53,7 +51,6 @@ def email(data, field):
         return data
     else:
         raise ValueError('invalid email address')
-
 
 def checkbox(data, field):
     # init static variables
@@ -75,7 +72,6 @@ def checkbox(data, field):
         return field.extra['value']
     else:
         return None
-
 
 def radio(data, field):
     data = data.lower()

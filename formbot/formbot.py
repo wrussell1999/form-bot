@@ -13,12 +13,10 @@ scaper_obj = FormScraper(config['url'])
 responses = {}
 questions = {}
 
-
 def main():
     logging.basicConfig(level=logging.INFO)
     token = config['token']
     bot.run(token)
-
 
 def get_questions(form):
     fields = form.fields
@@ -38,11 +36,9 @@ def get_questions(form):
                 questions.append(embed)
     return questions
 
-
 @bot.event
 async def on_ready():
     print("Ready")
-
 
 @bot.event
 async def on_message(message):
@@ -57,7 +53,6 @@ async def on_message(message):
             handle_response(message, author)
             await mentor_response(message)
             print(responses)
-
 
 async def mentor_response(message):
     author = str(message.author.id)
@@ -75,14 +70,12 @@ async def mentor_response(message):
         del responses[author]
         del questions[author]
 
-
 def handle_response(response, author):
     responses[author]['responses'].append(response.content)
     index = len(responses[author]['responses']) - 1
     name = questions[author]['names'][index]
     responses[author]['form'].fill_field(name, response.content)
     print("Response added to field")
-
 
 @bot.command()
 async def mentor(ctx):

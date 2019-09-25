@@ -5,7 +5,6 @@ from urllib.parse import urljoin
 from .fields import Field
 from . import fields
 
-
 class FormScraper:
     def __init__(self, url):
         self.url = url
@@ -113,7 +112,6 @@ class FormScraper:
                 return element.attrs[attr]
 
         return ''
-
 
 class Form:
     def __init__(self, session, method, action):
