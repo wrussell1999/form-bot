@@ -6,8 +6,6 @@ class Form:
         self.method = method.upper()
         self.action = action
 
-        print(self.action)
-
         self.fields = []
         self.name_lookup = {}
         self.id_lookup = {}

@@ -27,7 +27,7 @@ class FormScraper:
 
         for element in self.doc.form.find_all(['input', 'textarea']):
             # create field
-            field = self.load_field(element)
+            field = self._load_field(element)
             if field is None:
                 continue
 
@@ -41,8 +41,8 @@ class FormScraper:
 
         return form
 
-    def load_field(self, element):
-        display = self.load_label(element)
+    def _load_field(self, element):
+        display = self._load_label(element)
 
         if element.name == 'textarea':
             return Field(type='textarea',
@@ -78,7 +78,7 @@ class FormScraper:
                 radios = self.doc.find_all(
                     'input', attrs={'type': 'radio', 'name': name})
 
-                labels = [self.load_label(radio) for radio in radios]
+                labels = [self._load_label(radio) for radio in radios]
 
                 display = ','.join(labels)
                 required = any(radio.get('required', False)
@@ -100,7 +100,7 @@ class FormScraper:
 
         raise NotImplementedError('form element not supported')
 
-    def load_label(self, element):
+    def _load_label(self, element):
         # label in tag
         if 'id' in element.attrs:
             label = self.doc.find('label', attrs={'for': element['id']})
