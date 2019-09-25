@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import logging
+import requests
 from .scraper import FormScraper
 
 with open("config.json") as file:
@@ -79,7 +80,9 @@ def handle_response(response, author):
 
 @bot.command()
 async def mentor(ctx):
-    form = scaper_obj.extract()
+    session = requests.session()
+    form = scaper_obj.extract(session)
+
     author = str(ctx.message.author.id)
     responses[author] = {
         "form": form,

@@ -11,8 +11,9 @@ class FormScraper:
         self.url = url
         self.doc = None
 
-    def extract(self):
-        session = requests.session()
+    def extract(self, session=None):
+        if session is None:
+            session = requests.session()
 
         response = session.get(self.url)
         self.doc = BeautifulSoup(response.content, features='html.parser')
