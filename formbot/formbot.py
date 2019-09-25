@@ -3,12 +3,14 @@ from discord.ext import commands
 import json
 import logging
 import requests
+import yaml
 from .scraper import FormScraper
 
-with open("config.json") as file:
-    config = json.load(file)
+with open("config.yaml") as file:
+    config = yaml.load(file, Loader=yaml.BaseLoader)
 
-bot = commands.Bot(command_prefix=config['prefix'])
+bot = commands.Bot(command_prefix=config['discord']['prefix'])
+
 scaper_obj = FormScraper(config['url'])
 
 responses = {}
@@ -16,7 +18,7 @@ questions = {}
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    token = config['token']
+    token = config['discord']['token']
     bot.run(token)
 
 def get_questions(form):
@@ -30,7 +32,7 @@ def get_questions(form):
             elif field.type == 'radio':
                 items = field.display.split(',')
                 embed = discord.Embed(
-                    title=config['embed_title'], colour=0x348DDD)
+                    title=config['discord']['embed_title'], colour=0x348DDD)
                 for index, item in enumerate(items):
                     option = "Option " + str(index + 1)
                     embed.add_field(name=item, value=option, inline=False)
@@ -66,7 +68,7 @@ async def mentor_response(message):
             await message.author.send(
                 embed=questions[author]['questions'][response_length])
     else:
-        await message.author.send(config['end_message'])
+        await message.author.send(config['discord']['end_message'])
         responses[author]['form'].submit()
         del responses[author]
         del questions[author]
@@ -93,6 +95,6 @@ async def mentor(ctx):
         "names": [field.name for field in form.fields if not field.hidden]
     }
     print(questions[author])
-    await ctx.author.send(config['start_message'])
+    await ctx.author.send(config['discord']['start_message'])
     await mentor_response(ctx.message)
     await ctx.message.delete()
