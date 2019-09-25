@@ -7,7 +7,7 @@ venv
 .env/
 
 # config
-config.json
+config.yaml
 discord.log
 
 # vscode

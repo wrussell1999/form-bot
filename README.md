@@ -41,17 +41,17 @@ $ pip3 install -r requirements.txt
 
 You will need a token for discord. Follow [this guide](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token) to get one.
 
-Add the token, and URL for the form you want to use to `config.json`.
+Add the token, and URL for the form you want to use to `config.yaml`.
 
-```json
-{
-    "token": "token",
-    "url": "url",
-    "start_message": "First message when the command is called",
-    "end_message": "Last command to show all the questions have be answered",
-    "embed_title": "The title for polls, such as radios",
-    "prefix": "prefix for the discord bot"
-}
+```yaml
+url:
+
+discord:
+  token:
+  start_message: "Hello there! I'm here to help"
+  end_message: "Someone will be over to help you shortly!"
+  embed_title: "Respond with one of the options below"
+  prefix: "!"
 ```
 
 ### Run
